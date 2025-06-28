@@ -2,7 +2,7 @@
 # For many React projects, this is 'build'. For others (like Vite), it might be 'dist'.
 # If your build process outputs to a different folder, change "build" to that folder's name.
 [build]
-  publish = "build"
+  publish = "dist"
 
 # This is the single-page application (SPA) rewrite rule.
 # It ensures that all paths are served by your index.html file,
