@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminWithdrawalRequest, WithdrawalRequest, NotificationType } from '../types';
 // POINTS_PER_DOLLAR is not directly used here but good to keep if UI elements depend on it indirectly.
@@ -10,7 +11,7 @@ interface AdminPageProps {
   addNotification: (message: string, type: NotificationType) => void;
 }
 
-const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStatus, addNotification }) => {
+const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: AdminPageProps): JSX.Element => {
   const [requests, setRequests] = useState<AdminWithdrawalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'Pending Review' | 'Processed' | 'Rejected'>('Pending Review');
