@@ -1,17 +1,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminWithdrawalRequest, WithdrawalRequest, NotificationType } from '../types';
-// POINTS_PER_DOLLAR is not directly used here but good to keep if UI elements depend on it indirectly.
-// import { POINTS_PER_DOLLAR } from '../constants'; 
 import Modal from '../components/Modal';
 
 interface AdminPageProps {
-  getAllRequests: () => Promise<AdminWithdrawalRequest[]>; // Now returns a Promise
-  updateRequestStatus: (userId: string, requestId: string, newStatus: WithdrawalRequest['status'], reason?: string) => Promise<boolean>; // Now returns a Promise
+  getAllRequests: () => Promise<AdminWithdrawalRequest[]>;
+  updateRequestStatus: (userId: string, requestId: string, newStatus: WithdrawalRequest['status'], reason?: string) => Promise<boolean>;
   addNotification: (message: string, type: NotificationType) => void;
 }
 
-const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: AdminPageProps): JSX.Element => {
+const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStatus, addNotification }) => {
   const [requests, setRequests] = useState<AdminWithdrawalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'Pending Review' | 'Processed' | 'Rejected'>('Pending Review');
@@ -26,7 +24,7 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
     try {
-      const allReqs = await getAllRequests(); // Await the promise
+      const allReqs = await getAllRequests();
       setRequests(allReqs);
     } catch (error) {
       console.error("AdminPage: Error fetching withdrawal requests:", error);
@@ -69,7 +67,6 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
     
     if (success) {
       addNotification(`Request ${requestToReject.id.substring(0,8)}... rejected. ${requestToReject.status !== 'Rejected' ? `${pointsToRefund} points refunded.` : 'Reason updated.'}`, NotificationType.SUCCESS);
-      // Optimistically update UI or re-fetch
        setRequests(prevRequests => 
         prevRequests.map(req => 
           req.id === requestToReject.id && req.userId === requestToReject.userId 
@@ -77,9 +74,6 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
             : req
         )
       );
-      // Optionally, call fetchRequests() if you want to ensure data consistency from the server,
-      // especially if points refund logic could have side effects not captured by optimistic update.
-      // await fetchRequests(); 
     } else {
       addNotification(`Failed to reject request ${requestToReject.id.substring(0,8)}...`, NotificationType.ERROR);
     }
@@ -98,7 +92,6 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
           req.id === requestId && req.userId === userId ? { ...req, status: 'Processed', rejection_reason: undefined } : req
         )
       );
-      // await fetchRequests(); // Optional: re-fetch for consistency
     } else {
       addNotification(`Failed to update status for request ${requestId.substring(0,8)}...`, NotificationType.ERROR);
     }
@@ -107,7 +100,7 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
 
   const filteredRequests = requests.filter(req => filter === 'all' || req.status === filter);
 
-  if (isLoading && requests.length === 0) { // Show loader only if truly loading initial data
+  if (isLoading && requests.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -141,7 +134,7 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
         </div>
         <button
             onClick={fetchRequests} 
-            disabled={isLoading || !!updatingRequestId} // Disable if any request is being updated too
+            disabled={isLoading || !!updatingRequestId}
             className="px-4 py-2 text-sm font-medium bg-accent text-white rounded-md hover:bg-emerald-600 transition-colors shadow flex items-center disabled:opacity-50"
         >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 mr-2 ${(isLoading && requests.length > 0) || updatingRequestId ? 'animate-spin' : ''}`}>
@@ -225,10 +218,7 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
                                 className="text-blue-600 hover:text-blue-900 disabled:opacity-50 px-2 py-1 rounded-md hover:bg-blue-50 text-xs"
                               >
                                 Edit Reason
-                              </button>
-                          )}
-                          {request.status === 'Processed' && (
-                             <span className="text-xs text-slate-400">No actions</span>
+                             </button>
                           )}
                         </td>
                       </tr>
@@ -240,57 +230,42 @@ const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: Adm
           </div>
         </div>
       )}
-
+      
       {requestToReject && (
         <Modal
-          isOpen={showRejectionModal}
-          onClose={handleCloseRejectionModal}
-          onConfirm={handleConfirmRejection}
-          title={requestToReject.status === 'Rejected' ? "Edit Rejection Reason" : "Reject Withdrawal Request"}
-          confirmText={requestToReject.status === 'Rejected' ? "Update Reason" : "Confirm Rejection"}
-          confirmButtonClass={requestToReject.status === 'Rejected' ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" : "bg-red-600 hover:bg-red-700 focus:ring-red-500"}
+            isOpen={showRejectionModal}
+            onClose={handleCloseRejectionModal}
+            onConfirm={handleConfirmRejection}
+            title={requestToReject.status === 'Rejected' ? 'Edit Rejection Reason' : `Reject Request`}
+            confirmText={requestToReject.status === 'Rejected' ? 'Update Reason' : 'Confirm Rejection'}
+            confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-500"
         >
-          <div className="space-y-3">
-            <p className="text-sm text-slate-600">
-              {requestToReject.status === 'Rejected' 
-                ? "You are editing the rejection reason for the following request:"
-                : "You are about to reject the following withdrawal request:"
-              }
-            </p>
-            <ul className="text-sm list-disc list-inside bg-slate-50 p-3 rounded-md">
-              <li><strong>User:</strong> {requestToReject.userEmail}</li>
-              <li><strong>Amount:</strong> ${requestToReject.amount_usd.toFixed(2)} ({requestToReject.points.toLocaleString()} points)</li>
-              <li><strong>PayPal:</strong> {requestToReject.paypal_email}</li>
-              {requestToReject.status === 'Rejected' && requestToReject.rejection_reason && (
-                <li><strong>Current Reason:</strong> {requestToReject.rejection_reason}</li>
-              )}
-            </ul>
-            <div>
-              <label htmlFor="rejectionReason" className="block text-sm font-medium text-slate-700 mb-1">
-                Reason for Rejection (Required)
-              </label>
-              <textarea
-                id="rejectionReason"
-                rows={3}
-                value={rejectionReasonInput}
-                onChange={(e) => {
-                    setRejectionReasonInput(e.target.value);
-                    if (e.target.value.trim()) setRejectionReasonError(null);
-                }}
-                className={`w-full px-3 py-2 border ${rejectionReasonError ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm`}
-                placeholder="Enter reason for rejection..."
-                aria-describedby={rejectionReasonError ? "rejection-reason-error" : undefined}
-              />
-              {rejectionReasonError && <p id="rejection-reason-error" className="mt-1 text-xs text-red-500">{rejectionReasonError}</p>}
+            <div className="space-y-4">
+                <p>You are managing the withdrawal request from <span className="font-semibold">{requestToReject.userEmail}</span> for <span className="font-semibold">{requestToReject.points.toLocaleString()}</span> points.</p>
+                <div>
+                    <label htmlFor="rejectionReason" className="block text-sm font-medium text-slate-700">Rejection Reason</label>
+                    <textarea
+                        id="rejectionReason"
+                        rows={3}
+                        value={rejectionReasonInput}
+                        onChange={(e) => {
+                            setRejectionReasonInput(e.target.value);
+                            if (rejectionReasonError) setRejectionReasonError(null);
+                        }}
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${rejectionReasonError ? 'border-red-500 ring-red-500 border-red-500' : 'border-slate-300'}`}
+                        placeholder="e.g., Suspicious activity, terms of service violation..."
+                    />
+                    {rejectionReasonError && <p className="mt-1 text-xs text-red-500">{rejectionReasonError}</p>}
+                </div>
+                 {requestToReject.status !== 'Rejected' && (
+                    <p className="text-sm text-yellow-700 bg-yellow-50 p-3 rounded-md">
+                        Note: The user's points (<span className="font-semibold">{requestToReject.points.toLocaleString()}</span>) will be refunded to their account.
+                    </p>
+                 )}
             </div>
-             {requestToReject.status !== 'Rejected' && (
-                 <p className="text-sm text-yellow-700 bg-yellow-50 p-2 rounded-md">
-                    Note: Confirming rejection will refund {requestToReject.points.toLocaleString()} points to the user if the request was not already rejected.
-                 </p>
-             )}
-          </div>
         </Modal>
       )}
+
     </div>
   );
 };

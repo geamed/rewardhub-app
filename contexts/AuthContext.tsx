@@ -5,7 +5,7 @@ import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabas
 import { UserProfile, WithdrawalRequest, AdminWithdrawalRequest } from '../types';
 import { ADMIN_EMAIL, PROFILES_TABLE, WITHDRAWAL_REQUESTS_TABLE, POINTS_PER_DOLLAR } from '../constants';
 
-const QUERY_TIMEOUT_MS = 1000; // Decreased from 15000ms to 1000ms
+const QUERY_TIMEOUT_MS = 8000; // 8 seconds. A balance between not failing on slow networks and providing good UX.
 
 interface AuthContextType {
   currentUser: SupabaseUser | null;
