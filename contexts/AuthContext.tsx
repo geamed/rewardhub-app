@@ -5,7 +5,7 @@ import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabas
 import { UserProfile, WithdrawalRequest, AdminWithdrawalRequest } from '../types';
 import { ADMIN_EMAIL, PROFILES_TABLE, WITHDRAWAL_REQUESTS_TABLE, POINTS_PER_DOLLAR } from '../constants';
 
-const QUERY_TIMEOUT_MS = 15000; // Decreased from 35000ms to 15000ms
+const QUERY_TIMEOUT_MS = 1000; // Decreased from 15000ms to 1000ms
 
 interface AuthContextType {
   currentUser: SupabaseUser | null;
