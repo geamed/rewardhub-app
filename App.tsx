@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import Notification from './components/Notification';
 import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
-import EmailVerificationPage from './pages/EmailVerificationPage'; // New import
+import EmailVerificationPage from './pages/EmailVerificationPage';
 import Modal from './components/Modal';
 import { useAuth } from './contexts/AuthContext'; 
 import { WithdrawalRequest, NotificationType, NotificationMessage } from './types';
