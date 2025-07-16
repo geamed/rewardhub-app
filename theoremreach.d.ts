@@ -1,4 +1,3 @@
-
 // Ambient type declarations for TheoremReach SDK
 
 export interface TheoremReachRewardData {
@@ -12,6 +11,7 @@ export interface TheoremReachConfig {
   onReward?: (data: TheoremReachRewardData) => void;
   onRewardCenterOpened?: () => void;
   onRewardCenterClosed?: () => void;
+  userAttributes?: { [key: string]: string | number };
   // idfa?: string; // Optional, for iOS
   // gpsId?: string; // Optional, for Android
   // placementId?: string; // Optional for specific placements
