@@ -9,7 +9,7 @@ import AdminPage from './pages/AdminPage';
 import EmailVerificationPage from './pages/EmailVerificationPage';
 import Modal from './components/Modal';
 import { useAuth } from './contexts/AuthContext'; 
-import { WithdrawalRequest, NotificationType, NotificationMessage } from './types';
+import { WithdrawalRequest, NotificationType, NotificationMessage, UserProfile } from './types';
 import { THEOREMREACH_API_KEY, WITHDRAWAL_REQUESTS_TABLE } from './constants';
 import type { TheoremReachRewardData } from './theoremreach.d';
 import type { User as SupabaseUser, AuthError } from '@supabase/supabase-js';
@@ -49,6 +49,13 @@ const App: React.FC = () => {
 
   const prevCurrentUserRef = useRef<SupabaseUser | null>(currentUser);
   const slowLoadTimerRef = useRef<number | null>(null);
+
+  // Ref to hold the latest user profile to avoid stale closures in callbacks.
+  const currentUserProfileRef = useRef<UserProfile | null>(currentUserProfile);
+  useEffect(() => {
+    currentUserProfileRef.current = currentUserProfile;
+  }, [currentUserProfile]);
+
 
   useEffect(() => {
     const showFullScreenLoader = isAuthLoading && !currentUser;
@@ -184,10 +191,11 @@ const App: React.FC = () => {
 
           setLastProcessedTRSessionPoints(prevProcessedPoints => {
             const newlyEarnedPoints = currentTRSessionEarnings - prevProcessedPoints;
+            const userProfile = currentUserProfileRef.current; // Use the ref to get latest profile
 
-            if (newlyEarnedPoints > 0 && currentUserProfile) { 
+            if (newlyEarnedPoints > 0 && userProfile) { 
               console.log(`App.tsx (TR onReward): TheoremReach reported ${currentTRSessionEarnings} total session points. Previously processed: ${prevProcessedPoints}. Newly earned: ${newlyEarnedPoints}`);
-              updatePointsInContext(currentUserProfile.points + newlyEarnedPoints)
+              updatePointsInContext(userProfile.points + newlyEarnedPoints)
                 .then(success => {
                   if (success) {
                     addNotification(`You earned ${newlyEarnedPoints} points from TheoremReach!`, NotificationType.SUCCESS);
@@ -199,6 +207,8 @@ const App: React.FC = () => {
             } else if (newlyEarnedPoints < 0) {
               console.warn(`App.tsx (TR onReward): TheoremReach reported session earnings (${currentTRSessionEarnings}) less than previously processed (${prevProcessedPoints}). No points adjusted.`);
               return prevProcessedPoints; 
+            } else if (newlyEarnedPoints > 0 && !userProfile) {
+                console.error("App.tsx (TR onReward): Received TR reward but user profile ref is null. Cannot update points.");
             }
             return prevProcessedPoints;
           });
@@ -221,7 +231,7 @@ const App: React.FC = () => {
           setIsTheoremReachInitialized(false);
         }
     }
-  }, [currentUser, currentUserProfile, addNotification, updatePointsInContext, isTheoremReachInitialized]); 
+  }, [currentUser, addNotification, updatePointsInContext, isTheoremReachInitialized]); 
 
 
   const handleAccessTheoremReach = useCallback(() => {
