@@ -25,6 +25,7 @@ const App: React.FC = () => {
     isAdmin,
     addWithdrawalRequestToContext,
     updatePointsInContext,
+    updateUserDemographics,
     getAllUsersWithdrawalRequests, 
     updateUserWithdrawalRequestStatus,
     resendVerificationEmail // from useAuth
@@ -130,33 +131,50 @@ const App: React.FC = () => {
   }, [currentUser, isAuthLoading, addNotification, showVerificationMessageFor]);
 
   useEffect(() => {
-    const fetchUserWithdrawals = async () => {
-      if (currentUser?.id && currentUser.email_confirmed_at) { // Only fetch if email confirmed
-        console.log("App.tsx: Fetching withdrawal requests for user:", currentUser.id);
-        const { data, error } = await supabase
-          .from(WITHDRAWAL_REQUESTS_TABLE)
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error("App.tsx: Error fetching user withdrawal requests:", error.message, error);
-          addNotification(`Could not load withdrawal history: ${error.message}`, NotificationType.ERROR);
-          setUserWithdrawalRequests([]);
-        } else {
-          setUserWithdrawalRequests(data as WithdrawalRequest[]);
-          console.log("App.tsx: User withdrawal requests loaded:", data);
-        }
-      } else {
+    if (!currentUser?.id || !currentUser.email_confirmed_at) {
         setUserWithdrawalRequests([]);
-      }
+        return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchUserWithdrawals = async () => {
+        console.log("App.tsx: Fetching withdrawal requests for user:", currentUser.id);
+        try {
+            const { data, error } = await supabase
+                .from(WITHDRAWAL_REQUESTS_TABLE)
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .abortSignal(controller.signal);
+
+            if (error) {
+                if (error.name !== 'AbortError') {
+                    console.error("App.tsx: Error fetching user withdrawal requests:", error.message, error);
+                    addNotification(`Could not load withdrawal history: ${error.message}`, NotificationType.ERROR);
+                }
+                setUserWithdrawalRequests([]);
+            } else {
+                setUserWithdrawalRequests(data as WithdrawalRequest[]);
+                console.log("App.tsx: User withdrawal requests loaded:", data);
+            }
+        } catch (err) {
+            console.error("App.tsx: Unexpected error in fetchUserWithdrawals:", err);
+            addNotification("An unexpected error occurred while fetching withdrawal history.", NotificationType.ERROR);
+        }
     };
+
     fetchUserWithdrawals();
-  }, [currentUser, addNotification]);
+
+    return () => {
+        controller.abort();
+    };
+}, [currentUser, addNotification]);
+
 
    useEffect(() => {
-    if (!currentUser || !currentUser.id || !currentUser.email_confirmed_at) { // TR only if email confirmed
-      if(isTheoremReachInitialized || window.TR) console.log("App.tsx (TR Effect): User logged out, no ID, or email not confirmed. Clearing TheoremReach.");
+    if (!currentUserProfile || !currentUser?.id || !currentUser.email_confirmed_at) { // TR only if profile exists and email confirmed
+      if(isTheoremReachInitialized || window.TR) console.log("App.tsx (TR Effect): User logged out or profile not ready. Clearing TheoremReach.");
       setIsTheoremReachInitialized(false);
       if (window.TR) {
         window.TR = undefined; 
@@ -171,75 +189,71 @@ const App: React.FC = () => {
       return;
     }
     
+    // Do not initialize if profile is incomplete
+    if (!currentUserProfile.country_code || !currentUserProfile.postal_code) {
+        console.log("App.tsx (TR Effect): Profile incomplete, skipping TheoremReach initialization.");
+        setIsTheoremReachInitialized(false);
+        return;
+    }
+    
     const theoremReachUserId = currentUser.id; 
 
-    if (window.TR && window.TR.config?.userId !== theoremReachUserId) {
-        console.log(`App.tsx (TR Effect): TheoremReach user ID mismatch. Current: ${window.TR.config?.userId}, New: ${theoremReachUserId}. Re-initializing.`);
-        setLastProcessedTRSessionPoints(0);
-        window.TR = undefined; 
-    } else if (isTheoremReachInitialized && window.TR && window.TR.config?.userId === theoremReachUserId) {
+    if (isTheoremReachInitialized && window.TR?.config?.userId === theoremReachUserId) {
         console.log("App.tsx (TR Effect): TheoremReach already initialized for current user.");
         return;
     }
     
-    if (!window.TR || (window.TR.config?.userId !== theoremReachUserId)) {
-        console.log(`App.tsx (TR Effect): Preparing to initialize TheoremReach for user ID: ${theoremReachUserId}.`);
-        setLastProcessedTRSessionPoints(0); 
-    
-        const onRewardCallback = (data: TheoremReachRewardData) => {
-          const currentTRSessionEarnings = data.earnedThisSession || 0;
+    console.log(`App.tsx (TR Effect): Preparing to initialize TheoremReach for user ID: ${theoremReachUserId}.`);
+    setLastProcessedTRSessionPoints(0); 
 
-          setLastProcessedTRSessionPoints(prevProcessedPoints => {
-            const newlyEarnedPoints = currentTRSessionEarnings - prevProcessedPoints;
-            const userProfile = currentUserProfileRef.current; // Use the ref to get latest profile
-
-            if (newlyEarnedPoints > 0 && userProfile) { 
-              console.log(`App.tsx (TR onReward): TheoremReach reported ${currentTRSessionEarnings} total session points. Previously processed: ${prevProcessedPoints}. Newly earned: ${newlyEarnedPoints}`);
-              updatePointsInContext(userProfile.points + newlyEarnedPoints)
-                .then(success => {
-                  if (success) {
-                    addNotification(`You earned ${newlyEarnedPoints} points from TheoremReach!`, NotificationType.SUCCESS);
-                  } else {
-                    addNotification(`Failed to update points after TheoremReach reward.`, NotificationType.ERROR);
-                  }
-                });
-              return currentTRSessionEarnings; 
-            } else if (newlyEarnedPoints < 0) {
-              console.warn(`App.tsx (TR onReward): TheoremReach reported session earnings (${currentTRSessionEarnings}) less than previously processed (${prevProcessedPoints}). No points adjusted.`);
-              return prevProcessedPoints; 
-            } else if (newlyEarnedPoints > 0 && !userProfile) {
-                console.error("App.tsx (TR onReward): Received TR reward but user profile ref is null. Cannot update points.");
-            }
-            return prevProcessedPoints;
-          });
-        };
-
-        try {
-          const config = {
-            apiKey: THEOREMREACH_API_KEY,
-            userId: theoremReachUserId,
-            onReward: onRewardCallback,
-            onRewardCenterOpened: () => console.log("App.tsx (TR Event): TheoremReach Reward Center Opened"),
-            onRewardCenterClosed: () => console.log("App.tsx (TR Event): TheoremReach Reward Center Closed"),
-          };
-          window.TR = new window.TheoremReach(config);
-          setIsTheoremReachInitialized(true);
-          console.log("App.tsx (TR Effect): TheoremReach SDK Initialized successfully for user:", theoremReachUserId);
-        } catch (sdkError: any) {
-          console.error("App.tsx (TR Effect): Failed to initialize TheoremReach SDK:", sdkError.message || sdkError);
-          addNotification(`Could not initialize survey provider: ${sdkError.message || 'Unknown error'}`, NotificationType.ERROR);
-          setIsTheoremReachInitialized(false);
+    const onRewardCallback = (data: TheoremReachRewardData) => {
+      const currentTRSessionEarnings = data.earnedThisSession || 0;
+      setLastProcessedTRSessionPoints(prevProcessedPoints => {
+        const newlyEarnedPoints = currentTRSessionEarnings - prevProcessedPoints;
+        const userProfile = currentUserProfileRef.current;
+        if (newlyEarnedPoints > 0 && userProfile) { 
+          updatePointsInContext(userProfile.points + newlyEarnedPoints)
+            .then(success => {
+              if (success) {
+                addNotification(`You earned ${newlyEarnedPoints} points!`, NotificationType.SUCCESS);
+              }
+            });
+          return currentTRSessionEarnings; 
         }
+        return prevProcessedPoints;
+      });
+    };
+
+    try {
+      const userAttributes: { [key: string]: string } = {};
+      if (currentUserProfile.country_code) userAttributes.country_code = currentUserProfile.country_code;
+      if (currentUserProfile.postal_code) userAttributes.postal_code = currentUserProfile.postal_code;
+      
+      const config = {
+        apiKey: THEOREMREACH_API_KEY,
+        userId: theoremReachUserId,
+        onReward: onRewardCallback,
+        onRewardCenterOpened: () => console.log("App.tsx (TR Event): Opened"),
+        onRewardCenterClosed: () => console.log("App.tsx (TR Event): Closed"),
+        userAttributes: Object.keys(userAttributes).length > 0 ? userAttributes : undefined
+      };
+      
+      window.TR = new window.TheoremReach(config);
+      setIsTheoremReachInitialized(true);
+      console.log("App.tsx (TR Effect): TheoremReach SDK Initialized successfully for user:", theoremReachUserId, "with attributes:", userAttributes);
+    } catch (sdkError: any) {
+      console.error("App.tsx (TR Effect): Failed to initialize TheoremReach SDK:", sdkError.message || sdkError);
+      addNotification(`Could not initialize survey provider: ${sdkError.message || 'Unknown error'}`, NotificationType.ERROR);
+      setIsTheoremReachInitialized(false);
     }
-  }, [currentUser, addNotification, updatePointsInContext, isTheoremReachInitialized]); 
+  }, [currentUser, currentUserProfile, addNotification, updatePointsInContext, isTheoremReachInitialized]);
 
 
   const handleAccessTheoremReach = useCallback(() => {
-    if (isTheoremReachInitialized && window.TR && typeof window.TR.showRewardCenter === 'function') {
+    if (isTheoremReachInitialized && window.TR?.showRewardCenter) {
       window.TR.showRewardCenter();
     } else {
-      addNotification("Survey provider is not ready. Please wait or try logging in again.", NotificationType.INFO);
-      console.warn("App.tsx: handleAccessTheoremReach called but TR not ready. isTheoremReachInitialized:", isTheoremReachInitialized, "window.TR:", window.TR);
+      addNotification("Survey provider is not ready. Please complete your profile or wait.", NotificationType.INFO);
     }
   }, [isTheoremReachInitialized, addNotification]);
 
@@ -346,12 +360,14 @@ const App: React.FC = () => {
     }
     return (
       <Dashboard
-        points={currentUserProfile!.points} 
+        profile={currentUserProfile!} 
         onEarnPoints={handleAccessTheoremReach} 
-        isEarningPointsLoading={!isTheoremReachInitialized} 
+        isEarningPointsLoading={!isTheoremReachInitialized && !!(currentUserProfile?.country_code && currentUserProfile?.postal_code)} 
         withdrawalRequests={userWithdrawalRequests} 
         onWithdraw={handleWithdraw}
         isWithdrawLoading={isWithdrawLoading}
+        onSaveProfile={updateUserDemographics}
+        addNotification={addNotification}
       />
     );
   };
