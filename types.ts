@@ -1,10 +1,13 @@
+
 // Supabase user type is imported directly from @supabase/supabase-js where needed
 // e.g. import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string; // Corresponds to Supabase auth user ID
-  email: string | undefined; // Supabase user email can be undefined initially
+  email: string | null; // Supabase user email can be null
   points: number;
+  country_code: string | null;
+  postal_code: string | null;
   // updated_at: string; // Managed by Supabase
 }
 
@@ -31,7 +34,7 @@ export interface AdminWithdrawalRequest extends Omit<WithdrawalRequest, 'user_id
 // This type combines Supabase auth user with our application profile data
 export interface UserWithProfile {
   id: string; // Supabase auth user ID
-  email: string | undefined; // Supabase auth user email
+  email: string | null; // Supabase auth user email
   // Any other relevant fields from SupabaseUser that you might need
   profile: UserProfile | null; // Application-specific profile data
 }
