@@ -19,18 +19,24 @@ export interface Database {
           updated_at: string | null
           email: string | null
           points: number
+          country_code: string | null
+          postal_code: string | null
         }
         Insert: {
           id: string
           updated_at?: string | null
           email?: string | null
           points?: number
+          country_code?: string | null
+          postal_code?: string | null
         }
         Update: {
           id?: string
           updated_at?: string | null
           email?: string | null
           points?: number
+          country_code?: string | null
+          postal_code?: string | null
         }
         Relationships: [
           {
