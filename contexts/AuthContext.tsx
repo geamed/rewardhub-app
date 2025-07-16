@@ -365,45 +365,68 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     console.log(`AuthContext (Admin): ${operationName} fetching all withdrawal requests.`);
     
     try {
-      const supabaseQuery = supabase
+      // Step 1: Fetch all withdrawal requests
+      const requestsQuery = supabase
         .from(WITHDRAWAL_REQUESTS_TABLE)
-        .select(`
-          id, 
-          user_id, 
-          created_at, 
-          paypal_email, 
-          points, 
-          amount_usd, 
-          status, 
-          rejection_reason, 
-          ${PROFILES_TABLE}!user_id(email)
-        `)
+        .select(`*`)
         .order('created_at', { ascending: false });
 
-      const response = await Promise.race([
-        supabaseQuery,
-        createTimeoutPromise(QUERY_TIMEOUT_MS, operationName)
+      const requestsResponse = await Promise.race([
+        requestsQuery,
+        createTimeoutPromise(QUERY_TIMEOUT_MS, `${operationName} (fetch requests)`)
       ]);
       
-      // Type assertion for the data structure expected from the query
-      type WithdrawalWithProfileEmail = WithdrawalRequest & {
-        [PROFILES_TABLE]: { email: string } | null;
-      };
-      
-      const requestsData = response.data as WithdrawalWithProfileEmail[] | null;
-      const error = response.error;
+      const rawRequests = requestsResponse.data as WithdrawalRequest[] | null;
+      const requestsError = requestsResponse.error;
 
-      if (error) {
-        console.error(`AuthContext (Admin): Error ${operationName}:`, error.message, error);
+      if (requestsError) {
+        console.error(`AuthContext (Admin): Error ${operationName} fetching requests:`, requestsError.message, requestsError);
+        return [];
+      }
+      if (!rawRequests || rawRequests.length === 0) {
         return [];
       }
 
-      if (!requestsData) return [];
+      // Step 2: Extract unique user IDs from the requests
+      const userIds = [...new Set(rawRequests.map(req => req.user_id))];
+
+      // Step 3: Fetch the profiles corresponding to these user IDs
+      const profilesQuery = supabase
+        .from(PROFILES_TABLE)
+        .select('id, email')
+        .in('id', userIds);
       
-      const adminRequests: AdminWithdrawalRequest[] = requestsData.map((req) => ({
+      const profilesResponse = await Promise.race([
+          profilesQuery,
+          createTimeoutPromise(QUERY_TIMEOUT_MS, `${operationName} (fetch profiles)`)
+      ]);
+
+      const profilesData = profilesResponse.data as { id: string, email: string }[] | null;
+      const profilesError = profilesResponse.error;
+
+      if (profilesError) {
+        console.error(`AuthContext (Admin): Error ${operationName} fetching profiles:`, profilesError.message, profilesError);
+        // Fallback: return requests with a placeholder email
+        return rawRequests.map(req => ({
+             ...req,
+             userId: req.user_id,
+             userEmail: 'Error fetching email',
+        }));
+      }
+
+      // Step 4: Create a map of user ID to email for efficient lookup
+      const emailMap = new Map<string, string>();
+      if (profilesData) {
+        for (const profile of profilesData) {
+          emailMap.set(profile.id, profile.email || 'No email provided');
+        }
+      }
+
+      // Step 5: Combine the requests with the user emails
+      const adminRequests: AdminWithdrawalRequest[] = rawRequests.map((req) => ({
         id: req.id,
         userId: req.user_id, 
-        userEmail: req[PROFILES_TABLE]?.email || 'Unknown Email', 
+        userEmail: emailMap.get(req.user_id) || 'Unknown Email', 
         created_at: req.created_at,
         paypal_email: req.paypal_email,
         points: req.points,
@@ -411,8 +434,10 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         status: req.status,
         rejection_reason: req.rejection_reason,
       }));
+      
       console.log(`AuthContext (Admin): ${operationName} fetched:`, adminRequests.length);
       return adminRequests;
+
     } catch (catchError: any) {
       const isTimeout = catchError && catchError.message && catchError.message.includes("TIMED OUT");
       if (isTimeout) {
