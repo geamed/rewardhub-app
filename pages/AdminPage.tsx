@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminWithdrawalRequest, WithdrawalRequest, NotificationType } from '../types';
 import Modal from '../components/Modal';
@@ -10,7 +11,7 @@ interface AdminPageProps {
   addNotification: (message: string, type: NotificationType) => void;
 }
 
-const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStatus, addNotification }) => {
+const AdminPage = ({ getAllRequests, updateRequestStatus, addNotification }: AdminPageProps) => {
   const [requests, setRequests] = useState<AdminWithdrawalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'Pending Review' | 'Processed' | 'Rejected'>('Pending Review');
