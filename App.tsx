@@ -11,7 +11,7 @@ import EmailVerificationPage from './pages/EmailVerificationPage';
 import Modal from './components/Modal';
 import { useAuth } from './contexts/AuthContext'; 
 import { WithdrawalRequest, NotificationType, NotificationMessage, UserProfile } from './types';
-import { THEOREMREACH_API_KEY, WITHDRAWAL_REQUESTS_TABLE } from './constants';
+import { THEOREMREACH_API_KEY } from './constants';
 import type { TheoremReachRewardData } from './theoremreach.d';
 import type { User as SupabaseUser, AuthError } from '@supabase/supabase-js';
 import { supabase } from './supabase';
@@ -143,7 +143,7 @@ const App: React.FC = () => {
         console.log("App.tsx: Fetching withdrawal requests for user:", currentUser.id);
         try {
             const { data, error } = await supabase
-                .from(WITHDRAWAL_REQUESTS_TABLE)
+                .from('withdrawal_requests')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false })
@@ -156,7 +156,7 @@ const App: React.FC = () => {
                 }
                 setUserWithdrawalRequests([]);
             } else {
-                setUserWithdrawalRequests(data as WithdrawalRequest[]);
+                setUserWithdrawalRequests((data as unknown as WithdrawalRequest[]) || []);
                 console.log("App.tsx: User withdrawal requests loaded:", data);
             }
         } catch (err) {
