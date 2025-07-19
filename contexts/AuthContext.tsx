@@ -3,10 +3,8 @@ import React, { createContext, useState, useEffect, useContext, useCallback, Rea
 import { supabase } from '../supabase'; // Import the Supabase client
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
 import { UserProfile, WithdrawalRequest, AdminWithdrawalRequest } from '../types';
-import { ADMIN_EMAIL, PROFILES_TABLE, WITHDRAWAL_REQUESTS_TABLE, POINTS_PER_DOLLAR } from '../constants';
+import { ADMIN_EMAIL, POINTS_PER_DOLLAR } from '../constants';
 import { Database } from '../database.types';
-
-const QUERY_TIMEOUT_MS = 8000; // 8 seconds. A balance between not failing on slow networks and providing good UX.
 
 interface AuthContextType {
   currentUser: SupabaseUser | null;
@@ -38,26 +36,16 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
 
   const fetchUserProfile = useCallback(async (user: SupabaseUser): Promise<UserProfile | null> => {
     const operationName = 'fetchUserProfile';
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
-  
     console.log(`AuthContext: ${operationName} START for user: ${user.id}`);
     try {
       const { data, error } = await supabase
-        .from(PROFILES_TABLE)
+        .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .abortSignal(controller.signal)
         .single();
   
-      clearTimeout(timeoutId);
-  
       if (error && error.code !== 'PGRST116') {
-        if (error.name === 'AbortError') {
-          console.error(`AuthContext: ${operationName} for user ${user.id} TIMED OUT after ${QUERY_TIMEOUT_MS}ms.`);
-        } else {
-          console.error(`AuthContext: ${operationName} DB QUERY ERROR for user ${user.id}:`, error.message, error);
-        }
+        console.error(`AuthContext: ${operationName} DB QUERY ERROR for user ${user.id}:`, error.message, error);
         return null;
       }
   
@@ -68,7 +56,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       }
       return data;
     } catch (catchError: any) {
-      clearTimeout(timeoutId);
       console.error(`AuthContext: ${operationName} for user ${user.id} - UNEXPECTED ERROR in catch block:`, catchError.message, catchError);
       return null;
     }
@@ -76,9 +63,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   
   const createUserProfile = useCallback(async (user: SupabaseUser): Promise<UserProfile | null> => {
     const operationName = 'createUserProfile';
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
-
     console.log(`AuthContext: ${operationName} START for new user: ${user.id}, email: ${user.email}`);
     let initialPoints = 0;
     if (user.email === "theyabto@gmail.com" || user.email === "robuxwin24@gmail.com") {
@@ -89,33 +73,23 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     const profileToInsert: Database['public']['Tables']['profiles']['Insert'] = { 
         id: user.id, 
         email: user.email ?? null, 
-        points: initialPoints, 
-        country_code: null, 
-        postal_code: null 
+        points: initialPoints,
     };
 
     try {
       const { data, error } = await supabase
-        .from(PROFILES_TABLE)
+        .from('profiles')
         .insert([profileToInsert])
-        .abortSignal(controller.signal)
         .select()
         .single();
         
-      clearTimeout(timeoutId);
-      
       if (error) {
-        if (error.name === 'AbortError') {
-             console.error(`AuthContext: ${operationName} for user ${user.id} TIMED OUT after ${QUERY_TIMEOUT_MS}ms.`);
-        } else {
-            console.error(`AuthContext: ${operationName} DB INSERT ERROR for user ${user.id}:`, error.message, error);
-        }
+        console.error(`AuthContext: ${operationName} DB INSERT ERROR for user ${user.id}:`, error.message, error);
         return null;
       }
       console.log(`AuthContext: ${operationName} SUCCESS for user ${user.id}. Profile data:`, data);
       return data;
     } catch (catchError: any) {
-      clearTimeout(timeoutId);
       console.error(`AuthContext: ${operationName} for user ${user.id} - UNEXPECTED ERROR in catch block:`, catchError.message, catchError);
       return null;
     }
@@ -253,32 +227,26 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       console.warn(`AuthContext: ${operationName} called but no currentUser.`);
       return false;
     }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
-
+    
     console.log(`AuthContext: ${operationName} for user ${currentUser.id} to ${newPoints}`);
     try {
       const { data, error } = await supabase
-        .from(PROFILES_TABLE)
-        .update({ points: newPoints, updated_at: new Date().toISOString() })
+        .from('profiles')
+        .update({ points: newPoints })
         .eq('id', currentUser.id)
-        .abortSignal(controller.signal)
         .select()
         .single();
-
-      clearTimeout(timeoutId);
 
       if (error) {
         console.error(`AuthContext: Error ${operationName}:`, error.message, error);
         return false;
       }
       if (data) {
-        setCurrentUserProfile(data);
+        setCurrentUserProfile(data as unknown as UserProfile);
         console.log(`AuthContext: ${operationName} successful, new profile:`, data);
         return true;
       }
     } catch (catchError: any) {
-        clearTimeout(timeoutId);
         console.error(`AuthContext: ${operationName} for user ${currentUser.id} - UNEXPECTED ERROR:`, catchError.message, catchError);
         return false;
     }
@@ -291,21 +259,16 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       console.warn(`AuthContext: ${operationName} called but no currentUser.`);
       return false;
     }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
 
     console.log(`AuthContext: ${operationName} for user ${currentUser.id} with country=${countryCode}, postal=${postalCode}`);
     
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .update({ country_code: countryCode, postal_code: postalCode, updated_at: new Date().toISOString() })
+            .update({ country_code: countryCode, postal_code: postalCode })
             .eq('id', currentUser.id)
-            .abortSignal(controller.signal)
             .select()
             .single();
-
-        clearTimeout(timeoutId);
 
         if (error) {
             console.error(`AuthContext: Error ${operationName}:`, error.message, error);
@@ -313,13 +276,12 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         }
 
         if (data) {
-            setCurrentUserProfile(data);
+            setCurrentUserProfile(data as unknown as UserProfile);
             console.log(`AuthContext: ${operationName} successful, new profile:`, data);
             return true;
         }
         return false;
     } catch (catchError: any) {
-        clearTimeout(timeoutId);
         console.error(`AuthContext: ${operationName} for user ${currentUser.id} - UNEXPECTED ERROR:`, catchError.message, catchError);
         return false;
     }
@@ -334,9 +296,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       return { request: null, error: new Error("User not logged in or profile not loaded.") };
     }
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
-
     const amountUSD = requestData.points / POINTS_PER_DOLLAR;
 
     const newRequestPayload: Database['public']['Tables']['withdrawal_requests']['Insert'] = {
@@ -351,13 +310,10 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     console.log(`AuthContext: ${operationName} adding withdrawal request:`, newRequestPayload);
     try {
       const { data, error } = await supabase
-        .from(WITHDRAWAL_REQUESTS_TABLE)
+        .from('withdrawal_requests')
         .insert([newRequestPayload])
-        .abortSignal(controller.signal)
         .select()
         .single();
-
-      clearTimeout(timeoutId);
 
       if (error) {
         console.error(`AuthContext: Error ${operationName}:`, error.message, error);
@@ -374,7 +330,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       return { request: data, error: null };
 
     } catch (catchError: any) {
-        clearTimeout(timeoutId);
         const errorMessage = `AuthContext: ${operationName} for user ${currentUser.id} - UNEXPECTED ERROR: ${catchError instanceof Error ? catchError.message : String(catchError)}`;
         console.error(errorMessage, catchError);
         return { request: null, error: catchError instanceof Error ? catchError : new Error(errorMessage) };
@@ -386,40 +341,29 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     const operationName = 'getAllUsersWithdrawalRequests';
     if (!isAdmin) return [];
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
-
     console.log(`AuthContext (Admin): ${operationName} fetching all withdrawal requests.`);
     
     try {
-      // Step 1: Fetch all withdrawal requests and join with profiles
       const { data: rawRequests, error: requestsError } = await supabase
-        .from(WITHDRAWAL_REQUESTS_TABLE)
+        .from('withdrawal_requests')
         .select(`*, profiles(email)`)
-        .order('created_at', { ascending: false })
-        .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
+        .order('created_at', { ascending: false });
 
       if (requestsError) {
-        if (requestsError.name === 'AbortError') {
-          console.error(`AuthContext (Admin): ${operationName} TIMED OUT.`);
-        } else {
-          console.error(`AuthContext (Admin): Error ${operationName} fetching requests:`, requestsError.message, requestsError);
-        }
+        console.error(`AuthContext (Admin): Error ${operationName} fetching requests:`, requestsError.message, requestsError);
         return [];
       }
       if (!rawRequests || rawRequests.length === 0) {
         return [];
       }
       
-      type WithdrawalWithProfile = (typeof rawRequests)[number];
+      // Using 'as any' to bypass the complex inferred type from the join
+      const typedRequests = rawRequests as any[];
 
-      // Step 2: Combine the requests with the user emails
-      const adminRequests: AdminWithdrawalRequest[] = rawRequests.map((req: WithdrawalWithProfile) => ({
+      const adminRequests: AdminWithdrawalRequest[] = typedRequests.map((req) => ({
         id: req.id,
         userId: req.user_id, 
-        userEmail: Array.isArray(req.profiles) ? 'Error: Multiple Profiles' : req.profiles?.email || 'Unknown Email', 
+        userEmail: req.profiles?.email || 'Unknown Email', 
         created_at: req.created_at,
         paypal_email: req.paypal_email,
         points: req.points,
@@ -432,7 +376,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       return adminRequests;
 
     } catch (catchError: any) {
-      clearTimeout(timeoutId);
       console.error(`AuthContext (Admin): ${operationName} - UNEXPECTED ERROR:`, catchError.message, catchError);
       return [];
     }
@@ -447,23 +390,18 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     const operationName = 'updateUserWithdrawalRequestStatus';
     if (!isAdmin) return false;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS * 2); // Longer timeout for multi-step op
-
     console.log(`AuthContext (Admin): ${operationName} for request ${requestIdParam}, user ${userIdParam} to status ${newStatusParam}`);
 
     try {
       const { data: currentRequestData, error: fetchError } = await supabase
-        .from(WITHDRAWAL_REQUESTS_TABLE)
+        .from('withdrawal_requests')
         .select('points, status')
         .eq('id', requestIdParam) 
         .eq('user_id', userIdParam)
-        .abortSignal(controller.signal)
         .single();
       
       if (fetchError || !currentRequestData) {
         console.error(`AuthContext (Admin): Error ${operationName} fetching request or request not found:`, fetchError?.message, fetchError);
-        clearTimeout(timeoutId);
         return false;
       }
 
@@ -475,15 +413,13 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       }
 
       const { error: updateError } = await supabase
-        .from(WITHDRAWAL_REQUESTS_TABLE)
+        .from('withdrawal_requests')
         .update(updatePayload)
         .eq('id', requestIdParam) 
-        .eq('user_id', userIdParam)
-        .abortSignal(controller.signal);
+        .eq('user_id', userIdParam);
 
       if (updateError) {
         console.error(`AuthContext (Admin): Error ${operationName} updating status:`, updateError.message, updateError);
-        clearTimeout(timeoutId);
         return false;
       }
 
@@ -492,10 +428,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
 
       if (statusChangedToRejected || statusChangedFromRejected) {
         const { data: profile, error: profileError } = await supabase
-          .from(PROFILES_TABLE)
+          .from('profiles')
           .select('points')
           .eq('id', userIdParam)
-          .abortSignal(controller.signal)
           .single();
         
         if (profileError || !profile) {
@@ -507,10 +442,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
 
           const newPoints = profile.points + pointsAdjustment;
           const { error: pointsAdjustError } = await supabase
-            .from(PROFILES_TABLE)
-            .update({ points: newPoints < 0 ? 0 : newPoints, updated_at: new Date().toISOString() }) 
-            .eq('id', userIdParam)
-            .abortSignal(controller.signal);
+            .from('profiles')
+            .update({ points: newPoints < 0 ? 0 : newPoints }) 
+            .eq('id', userIdParam);
             
           if (pointsAdjustError) {
             console.error(`AuthContext (Admin): Error ${operationName} ${statusChangedToRejected ? 'refunding' : 'deducting'} points:`, pointsAdjustError.message, pointsAdjustError);
@@ -520,11 +454,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         }
       }
       console.log(`AuthContext (Admin): ${operationName} for request ${requestIdParam} status updated successfully.`); 
-      clearTimeout(timeoutId);
       return true;
 
     } catch (catchError: any) {
-      clearTimeout(timeoutId);
       console.error(`AuthContext (Admin): ${operationName} - UNEXPECTED ERROR:`, catchError.message, catchError);
       return false;
     }
