@@ -266,33 +266,40 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     console.log(`AuthContext: ${operationName} for user ${currentUser.id} with country=${countryCode}, postal=${postalCode}`);
     
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('profiles')
             .update({ 
                 country_code: countryCode, 
                 postal_code: postalCode,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', currentUser.id)
-            .select()
-            .single();
+            .eq('id', currentUser.id);
 
         if (error) {
-            console.error(`AuthContext: Error ${operationName}:`, error.message, error);
+            console.error(`AuthContext: Error during ${operationName} .update():`, error.message, error);
             return false;
         }
 
-        if (data) {
-            setCurrentUserProfile(data);
-            console.log(`AuthContext: ${operationName} successful, new profile:`, data);
+        console.log(`AuthContext: ${operationName} .update() successful. Re-fetching profile to update state.`);
+        // Re-fetch the profile to get the most up-to-date data and ensure UI consistency.
+        const updatedProfile = await fetchUserProfile(currentUser);
+
+        if (updatedProfile) {
+            setCurrentUserProfile(updatedProfile);
+            console.log(`AuthContext: ${operationName} re-fetch successful, context updated.`);
+            return true;
+        } else {
+            // This is a concerning state: the update likely succeeded but we can't get the new data.
+            console.error(`AuthContext: ${operationName} update was successful, but re-fetching the profile failed. The UI might be stale.`);
+            // Return true because the data *was* saved, but log the inconsistency. The user can refresh.
             return true;
         }
-        return false;
+
     } catch (catchError: any) {
-        console.error(`AuthContext: ${operationName} for user ${currentUser.id} - UNEXPECTED ERROR:`, catchError.message, catchError);
+        console.error(`AuthContext: ${operationName} for user ${currentUser.id} - UNEXPECTED ERROR in catch block:`, catchError.message, catchError);
         return false;
     }
-  }, [currentUser]);
+  }, [currentUser, fetchUserProfile]);
 
   const addWithdrawalRequestToContext = useCallback(async (
     requestData: Omit<WithdrawalRequest, 'id' | 'user_id' | 'created_at' | 'amount_usd'>
