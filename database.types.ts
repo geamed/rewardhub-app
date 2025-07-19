@@ -38,14 +38,7 @@ export interface Database {
           country_code?: string | null
           postal_code?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       withdrawal_requests: {
         Row: {
@@ -78,14 +71,7 @@ export interface Database {
           status?: "Pending Review" | "Processed" | "Rejected"
           rejection_reason?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "withdrawal_requests_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {
