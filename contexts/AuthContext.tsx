@@ -6,7 +6,7 @@ import { UserProfile, WithdrawalRequest, AdminWithdrawalRequest } from '../types
 import { ADMIN_EMAIL, PROFILES_TABLE, WITHDRAWAL_REQUESTS_TABLE, POINTS_PER_DOLLAR } from '../constants';
 import { Database } from '../database.types';
 
-const QUERY_TIMEOUT_MS = 3000; // 8 seconds. A balance between not failing on slow networks and providing good UX.
+const QUERY_TIMEOUT_MS = 8000; // 8 seconds. A balance between not failing on slow networks and providing good UX.
 
 interface AuthContextType {
   currentUser: SupabaseUser | null;
@@ -273,7 +273,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         return false;
       }
       if (data) {
-        setCurrentUserProfile(data as UserProfile);
+        setCurrentUserProfile(data);
         console.log(`AuthContext: ${operationName} successful, new profile:`, data);
         return true;
       }
@@ -313,7 +313,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         }
 
         if (data) {
-            setCurrentUserProfile(data as UserProfile);
+            setCurrentUserProfile(data);
             console.log(`AuthContext: ${operationName} successful, new profile:`, data);
             return true;
         }
@@ -344,7 +344,8 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       paypal_email: requestData.paypal_email,
       points: requestData.points,
       amount_usd: amountUSD,
-      status: requestData.status, 
+      status: requestData.status,
+      rejection_reason: requestData.rejection_reason,
     };
     
     console.log(`AuthContext: ${operationName} adding withdrawal request:`, newRequestPayload);
@@ -370,7 +371,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
           console.error(`AuthContext: CRITICAL - ${operationName} - Withdrawal request created but failed to deduct points.`);
       }
       
-      return { request: data as WithdrawalRequest | null, error: null };
+      return { request: data, error: null };
 
     } catch (catchError: any) {
         clearTimeout(timeoutId);
@@ -401,7 +402,11 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       clearTimeout(timeoutId);
 
       if (requestsError) {
-        console.error(`AuthContext (Admin): Error ${operationName} fetching requests:`, requestsError.message, requestsError);
+        if (requestsError.name === 'AbortError') {
+          console.error(`AuthContext (Admin): ${operationName} TIMED OUT.`);
+        } else {
+          console.error(`AuthContext (Admin): Error ${operationName} fetching requests:`, requestsError.message, requestsError);
+        }
         return [];
       }
       if (!rawRequests || rawRequests.length === 0) {
@@ -458,6 +463,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       
       if (fetchError || !currentRequestData) {
         console.error(`AuthContext (Admin): Error ${operationName} fetching request or request not found:`, fetchError?.message, fetchError);
+        clearTimeout(timeoutId);
         return false;
       }
 
@@ -477,6 +483,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
 
       if (updateError) {
         console.error(`AuthContext (Admin): Error ${operationName} updating status:`, updateError.message, updateError);
+        clearTimeout(timeoutId);
         return false;
       }
 
