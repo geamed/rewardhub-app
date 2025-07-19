@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -272,6 +273,7 @@ const App: React.FC = () => {
       paypal_email: paypalEmail,
       points: pointsToWithdraw,
       status: 'Pending Review' as WithdrawalRequest['status'],
+      rejection_reason: null,
     };
 
     const { request: createdRequest, error: withdrawalError } = await addWithdrawalRequestToContext(requestPayload);
