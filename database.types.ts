@@ -71,7 +71,14 @@ export interface Database {
           status?: "Pending Review" | "Processed" | "Rejected"
           rejection_reason?: string | null
         }
-        Relationships: []
+        Relationships: [
+            {
+              foreignKeyName: "withdrawal_requests_user_id_fkey"
+              columns: ["user_id"]
+              referencedRelation: "profiles"
+              referencedColumns: ["id"]
+            }
+          ]
       }
     }
     Views: {
