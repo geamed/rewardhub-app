@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useEffect, useContext, useCallback, ReactNode } from 'react';
 import { supabase } from '../supabase'; // Import the Supabase client
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js';
@@ -74,6 +75,8 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         id: user.id, 
         email: user.email ?? null, 
         points: initialPoints,
+        country_code: null,
+        postal_code: null,
     };
 
     try {
@@ -232,7 +235,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .update({ points: newPoints })
+        .update({ points: newPoints, updated_at: new Date().toISOString() })
         .eq('id', currentUser.id)
         .select()
         .single();
@@ -242,7 +245,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         return false;
       }
       if (data) {
-        setCurrentUserProfile(data as unknown as UserProfile);
+        setCurrentUserProfile(data);
         console.log(`AuthContext: ${operationName} successful, new profile:`, data);
         return true;
       }
@@ -265,7 +268,11 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .update({ country_code: countryCode, postal_code: postalCode })
+            .update({ 
+                country_code: countryCode, 
+                postal_code: postalCode,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', currentUser.id)
             .select()
             .single();
@@ -276,7 +283,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         }
 
         if (data) {
-            setCurrentUserProfile(data as unknown as UserProfile);
+            setCurrentUserProfile(data);
             console.log(`AuthContext: ${operationName} successful, new profile:`, data);
             return true;
         }
@@ -357,10 +364,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         return [];
       }
       
-      // Using 'as any' to bypass the complex inferred type from the join
-      const typedRequests = rawRequests as any[];
-
-      const adminRequests: AdminWithdrawalRequest[] = typedRequests.map((req) => ({
+      const adminRequests: AdminWithdrawalRequest[] = rawRequests.map((req) => ({
         id: req.id,
         userId: req.user_id, 
         userEmail: req.profiles?.email || 'Unknown Email', 
