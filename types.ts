@@ -1,26 +1,13 @@
 
+import type { Database } from './database.types';
+
 // Supabase user type is imported directly from @supabase/supabase-js where needed
 // e.g. import type { User as SupabaseUser } from '@supabase/supabase-js';
 
-export interface UserProfile {
-  id: string; // Corresponds to Supabase auth user ID
-  email: string | null; // Supabase user email can be null
-  points: number;
-  country_code: string | null;
-  postal_code: string | null;
-  // updated_at: string; // Managed by Supabase
-}
+// --- Using generated types for consistency ---
+export type UserProfile = Database['public']['Tables']['profiles']['Row'];
+export type WithdrawalRequest = Database['public']['Tables']['withdrawal_requests']['Row'];
 
-export interface WithdrawalRequest {
-  id: string; // UUID from Supabase
-  user_id: string; // Foreign key to auth.users or profiles
-  created_at: string; // Timestamp from Supabase, used as date
-  paypal_email: string;
-  points: number;
-  amount_usd: number;
-  status: 'Pending Review' | 'Processed' | 'Rejected';
-  rejection_reason?: string;
-}
 
 // Type for withdrawal requests as viewed by an admin, including user identifiers
 export interface AdminWithdrawalRequest extends Omit<WithdrawalRequest, 'user_id'> {
