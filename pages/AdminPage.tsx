@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminWithdrawalRequest, WithdrawalRequest, NotificationType } from '../types';
 import Modal from '../components/Modal';
@@ -88,7 +90,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
       addNotification(`Request ${requestId.substring(0,8)}... status updated to Processed.`, NotificationType.SUCCESS);
       setRequests(prevRequests => 
         prevRequests.map(req => 
-          req.id === requestId && req.userId === userId ? { ...req, status: 'Processed', rejection_reason: undefined } : req
+          req.id === requestId && req.userId === userId ? { ...req, status: 'Processed', rejection_reason: null } : req
         )
       );
     } else {
