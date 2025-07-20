@@ -7,8 +7,6 @@ import { UserProfile, WithdrawalRequest, AdminWithdrawalRequest } from '../types
 import { ADMIN_EMAIL, POINTS_PER_DOLLAR } from '../constants';
 import { Database } from '../database.types';
 
-const QUERY_TIMEOUT_MS = 5000; // 8 seconds. A balance between not failing on slow networks and providing good UX.
-
 interface AuthContextType {
   currentUser: SupabaseUser | null;
   currentUserProfile: UserProfile | null;
