@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { APP_NAME } from '../constants';
 import GiftIcon from '../components/icons/GiftIcon';
 import { NotificationType } from '../types';
-import EmailVerificationPage from '../EmailVerificationPage';
-export default EmailVerificationPage;
+// ...existing code...
 
 interface EmailVerificationPageProps {
   email: string;
