@@ -21,9 +21,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "types": [
-      "vite/client"
-    ],
+    "types": [],
     "allowJs": true,
     "incremental": true
   },
