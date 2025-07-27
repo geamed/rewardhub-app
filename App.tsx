@@ -37,12 +37,12 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
   const [isTheoremReachInitialized, setIsTheoremReachInitialized] = useState(false);
   const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
-  const [lastProcessedTRSessionPoints, setLastProcessedTRSessionPoints] = useState(0);
+  // تم حذف lastProcessedTRSessionPoints لأنه غير مستخدم مباشرة
   const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'admin'>('dashboard'); // For main app navigation
   const [userWithdrawalRequests, setUserWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [showSlowLoadOptions, setShowSlowLoadOptions] = useState(false);
-  const [logoutTrigger, setLogoutTrigger] = useState(0);
+  // تم حذف logoutTrigger لأنه غير مستخدم مباشرة
 
   // New states for email verification flow
   const [showVerificationMessageFor, setShowVerificationMessageFor] = useState<string | null>(null);
@@ -180,7 +180,7 @@ const App: React.FC = () => {
       if (window.TR) {
         window.TR = undefined; 
       }
-      setLastProcessedTRSessionPoints(0); 
+      // تم حذف setLastProcessedTRSessionPoints
       return;
     }
 
@@ -205,24 +205,21 @@ const App: React.FC = () => {
     }
     
     console.log(`App.tsx (TR Effect): Preparing to initialize TheoremReach for user ID: ${theoremReachUserId}.`);
-    setLastProcessedTRSessionPoints(0); 
+    // تم حذف setLastProcessedTRSessionPoints
 
     const onRewardCallback = (data: TheoremReachRewardData) => {
-      const currentTRSessionEarnings = data.earnedThisSession || 0;
-      setLastProcessedTRSessionPoints(prevProcessedPoints => {
-        const newlyEarnedPoints = currentTRSessionEarnings - prevProcessedPoints;
-        const userProfile = currentUserProfileRef.current;
-        if (newlyEarnedPoints > 0 && userProfile) { 
-          updatePointsInContext(userProfile.points + newlyEarnedPoints)
-            .then(success => {
-              if (success) {
-                addNotification(`You earned ${newlyEarnedPoints} points!`, NotificationType.SUCCESS);
-              }
-            });
-          return currentTRSessionEarnings; 
-        }
-        return prevProcessedPoints;
-      });
+      // تم حذف currentTRSessionEarnings لأنه غير مستخدم مباشرة
+      // تم حذف setLastProcessedTRSessionPoints والمنطق المرتبط به
+      const newlyEarnedPoints = data.earnedThisSession || 0;
+      const userProfile = currentUserProfileRef.current;
+      if (newlyEarnedPoints > 0 && userProfile) {
+        updatePointsInContext(userProfile.points + newlyEarnedPoints)
+          .then(success => {
+            if (success) {
+              addNotification(`You earned ${newlyEarnedPoints} points!`, NotificationType.SUCCESS);
+            }
+          });
+      }
     };
 
     try {
@@ -300,7 +297,7 @@ const App: React.FC = () => {
     setAuthPageInitialMode('login'); // Reset auth page to login
     console.log("App.tsx: logout() in AuthContext completed. Explicitly hiding slow load options and forcing App.tsx re-evaluation.");
     // setShowSlowLoadOptions(false); // This is handled by useEffect [isAuthLoading, currentUser]
-    setLogoutTrigger(prev => prev + 1); 
+    // تم حذف setLogoutTrigger لأنه غير معرف
   };
 
   const cancelLogoutAction = () => {
