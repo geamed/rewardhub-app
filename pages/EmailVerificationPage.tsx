@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { APP_NAME } from '../constants';
 import GiftIcon from '../components/icons/GiftIcon';
-
-import React, { useState } from 'react';
-import { APP_NAME } from '../constants';
-import GiftIcon from '../components/icons/GiftIcon';
 import { NotificationType } from '../types';
 import EmailVerificationPage from '../EmailVerificationPage';
 export default EmailVerificationPage;
