@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NotificationMessage, NotificationType } from './types';
-import XCircleIcon from './XCircleIcon'; // Import the dedicated icon
+import XCircleIcon from './components/icons/XCircleIcon'; // Import the dedicated icon
 
 interface NotificationProps {
   notification: NotificationMessage | null;

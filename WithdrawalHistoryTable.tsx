@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { WithdrawalRequest } from './types';
-import { POINTS_PER_DOLLAR } from './constants';
+
 
 interface WithdrawalHistoryTableProps {
   requests: WithdrawalRequest[];

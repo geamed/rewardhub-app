@@ -1,8 +1,8 @@
 
 import React, { useState, FormEvent } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import { APP_NAME } from './constants';
-import GiftIcon from './GiftIcon'; 
+import GiftIcon from './components/icons/GiftIcon'; 
 import { NotificationType } from './types';
 import type { AuthError } from '@supabase/supabase-js';
 
