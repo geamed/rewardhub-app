@@ -1,3 +1,6 @@
+import AuthPage from '../AuthPage';
+export default AuthPage;
+
 
 import React, { useState, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Ensure this import path and named import are correct

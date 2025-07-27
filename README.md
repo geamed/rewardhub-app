@@ -1,14 +1,20 @@
-# Run and deploy your AI Studio app
+# RewardHub (Next.js + React)
 
-This contains everything you need to run your app locally.
+هذا المشروع الآن يستخدم Next.js بدلاً من Vite.
 
-## Run Locally
+## تشغيل محليًا
 
-**Prerequisites:**  Node.js
+**المتطلبات:** Node.js
 
-
-1. Install dependencies:
+1. تثبيت الاعتماديات:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. ضع متغير البيئة `GEMINI_API_KEY` في ملف [.env.local](.env.local)
+3. لتشغيل التطبيق:
    `npm run dev`
+
+## البناء والتشغيل للإنتاج
+
+```bash
+npm run build
+npm start
+```

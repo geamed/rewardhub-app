@@ -4,6 +4,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AdminWithdrawalRequest, WithdrawalRequest, NotificationType } from '../types';
 import Modal from '../components/Modal';
+import AdminPage from '../AdminPage';
+export default AdminPage;
 
 interface AdminPageProps {
   getAllRequests: () => Promise<AdminWithdrawalRequest[]>;
