@@ -358,7 +358,6 @@ const App: React.FC = () => {
     if (currentView === 'admin' && isAdmin) {
       return <AdminPage 
                 getAllRequests={getAllUsersWithdrawalRequests} 
-                updateRequestStatus={updateUserWithdrawalRequestStatus}
                 addNotification={addNotification}
              />;
     }
