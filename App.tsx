@@ -279,7 +279,12 @@ const App: React.FC = () => {
       addNotification(`Withdrawal request for ${pointsToWithdraw} points submitted.`, NotificationType.SUCCESS);
       setUserWithdrawalRequests(prev => [createdRequest, ...prev]); 
     } else {
-      const errorMessage = withdrawalError instanceof Error ? withdrawalError.message : (withdrawalError as AuthError)?.message || "Withdrawal request failed. Please try again.";
+      const errorMessage =
+        withdrawalError == null
+          ? "Withdrawal request failed. Please try again."
+          : withdrawalError instanceof Error
+            ? withdrawalError.message
+            : (withdrawalError as AuthError)?.message || "Withdrawal request failed. Please try again.";
       addNotification(errorMessage, NotificationType.ERROR);
     }
     setIsWithdrawLoading(false);
