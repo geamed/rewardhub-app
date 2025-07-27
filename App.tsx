@@ -28,7 +28,6 @@ const App: React.FC = () => {
     updatePointsInContext,
     updateUserDemographics,
     getAllUsersWithdrawalRequests, 
-    updateUserWithdrawalRequestStatus,
     resendVerificationEmail // from useAuth
   } = useAuth();
   
