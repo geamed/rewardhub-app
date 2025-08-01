@@ -18,19 +18,20 @@ import { supabase } from './supabase';
 import XCircleIcon from './components/icons/XCircleIcon';
 
 const App: React.FC = () => {
-  const { 
-    currentUser, 
-    currentUserProfile, 
-    logout, 
-    isLoading: isAuthLoading, 
+  const {
+    currentUser,
+    currentUserProfile,
+    logout,
+    isLoading: isAuthLoading,
     isAdmin,
     addWithdrawalRequestToContext,
     updatePointsInContext,
     updateUserDemographics,
-    getAllUsersWithdrawalRequests, 
+    getAllUsersWithdrawalRequests,
+    updateUserWithdrawalRequestStatus, // Corrected destructuring name
     resendVerificationEmail // from useAuth
   } = useAuth();
-  
+
   console.log('App.tsx Render - currentUser:', currentUser?.id, 'isAdmin:', isAdmin, 'isAuthLoading:', isAuthLoading, 'currentUserProfile exists:', !!currentUserProfile);
 
   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
@@ -67,7 +68,7 @@ const App: React.FC = () => {
       }
       slowLoadTimerRef.current = window.setTimeout(() => {
         // Check condition again inside timeout, as state might have changed
-        if (isAuthLoading && !currentUser) { 
+        if (isAuthLoading && !currentUser) {
             console.log("App.tsx: Slow load timer fired for full-screen loader. Setting showSlowLoadOptions to true.");
             setShowSlowLoadOptions(true);
         } else {
@@ -357,6 +358,7 @@ const App: React.FC = () => {
     if (currentView === 'admin' && isAdmin) {
       return <AdminPage 
                 getAllRequests={getAllUsersWithdrawalRequests} 
+                updateRequestStatus={updateUserWithdrawalRequestStatus} // Passed updateUserWithdrawalRequestStatus here
                 addNotification={addNotification}
              />;
     }

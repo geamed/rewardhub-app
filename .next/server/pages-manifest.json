@@ -1,0 +1,10 @@
+{
+  "/_app": "pages/_app.js",
+  "/AdminPage": "pages/AdminPage.html",
+  "/AuthPage": "pages/AuthPage.html",
+  "/EmailVerificationPage": "pages/EmailVerificationPage.html",
+  "/": "pages/index.html",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/404": "pages/404.html"
+}
