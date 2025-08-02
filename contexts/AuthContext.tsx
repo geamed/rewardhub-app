@@ -41,7 +41,8 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*') // Select all columns
+        .maybeSingle(); // Use maybeSingle to handle cases where no profile is found without throwing an error
         .eq('id', user.id)
         .single();
   
