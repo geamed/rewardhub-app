@@ -170,7 +170,7 @@ const App: React.FC = () => {
     return () => {
         controller.abort();
     };
-}, [currentUser, addNotification]);
+}, [currentUser, currentUserProfile, addNotification]);
 
 
    useEffect(() => {
