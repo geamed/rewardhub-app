@@ -46,11 +46,13 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         .single();
   
       if (error && error.code !== 'PGRST116') {
-        console.error(`AuthContext: ${operationName} DB QUERY ERROR for user ${user.id}:`, error.message, error);
+        // Log the error object directly
+        console.error(`AuthContext: ${operationName} DB QUERY ERROR for user ${user.id}:`, error);
         return null;
       }
   
       if (data) {
+        // Log the data object directly
         console.log(`AuthContext: ${operationName} SUCCESS for user ${user.id}. Profile data retrieved.`);
       } else {
         console.log(`AuthContext: ${operationName} for user ${user.id} - NO PROFILE FOUND.`);
@@ -87,9 +89,11 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
         .single();
         
       if (error) {
-        console.error(`AuthContext: ${operationName} DB INSERT ERROR for user ${user.id}:`, error.message, error);
+        // Log the error object directly
+        console.error(`AuthContext: ${operationName} DB INSERT ERROR for user ${user.id}:`, error);
         return null;
       }
+      // Log the data object directly
       console.log(`AuthContext: ${operationName} SUCCESS for user ${user.id}. Profile data:`, data);
       return data;
     } catch (catchError: any) {
