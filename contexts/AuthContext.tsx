@@ -137,7 +137,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
           setCurrentUser(null);
           setCurrentUserProfile(null);
           setIsAdmin(false);
-        }
       } catch (error: any) {
         console.error(`AuthContext: [${_event}] CRITICAL ERROR in onAuthStateChange outer try/catch block:`, error.message, error);
         setCurrentUser(null);
