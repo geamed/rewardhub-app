@@ -120,6 +120,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
           console.log(`AuthContext: [${_event}] User session found for ${userInEventScope.id}. Setting currentUser object.`);
           setCurrentUser(userInEventScope);
           setIsAdmin(userInEventScope.email === ADMIN_EMAIL);
+          console.log(`AuthContext: [${_event}] After setIsAdmin. isAdmin is: ${userInEventScope.email === ADMIN_EMAIL}`);
 
           if (userInEventScope.email_confirmed_at) {
             console.log(`AuthContext: [${_event}] Email CONFIRMED for ${userInEventScope.id}. Attempting to fetch profile.`);
