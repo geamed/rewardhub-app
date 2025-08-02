@@ -24,6 +24,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
     try {
       const allReqs = await getAllRequests();
       setRequests(allReqs);
+      console.log('AdminPage: requests:', allReqs);
     } catch (error) {
       console.error("AdminPage: Error fetching withdrawal requests:", error);
       addNotification("Failed to load withdrawal requests.", NotificationType.ERROR);
@@ -97,6 +98,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
     setUpdatingRequestId(null);
   };
 
+
   const filteredRequests = requests.filter(request =>
     filter === 'all' ? true : request.status === filter
   );
@@ -130,7 +132,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
       )}
 
       {!isLoading && filteredRequests.length > 0 && (
-        // Example: Table structure
         <table className="min-w-full bg-white">
           <thead>
             <tr>
@@ -138,30 +139,27 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
               <th className="py-2 px-4 border-b">User ID</th>
               <th className="py-2 px-4 border-b">Date</th>
               <th className="py-2 px-4 border-b">User Email</th>
-              <th className="py-2 px-4 border-b">PayPal Email</th> {/* Added PayPal Email Header */}
+              <th className="py-2 px-4 border-b">PayPal Email</th>
               <th className="py-2 px-4 border-b">Amount (USD)</th>
               <th className="py-2 px-4 border-b">Points</th>
               <th className="py-2 px-4 border-b">Status</th>
               <th className="py-2 px-4 border-b">Reason (if rejected)</th>
-              <th className="py-2 px-4 border-b">Actions</th> {/* Keep Actions at the end */}
+              <th className="py-2 px-4 border-b">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredRequests.map(request => (
-              <tr key={request.id}> {/* Use request.id as the key */}
-                {/* Render request data here */}
+              <tr key={request.id}>
                 <td className="py-2 px-4 border-b">{request.id}</td>
                 <td className="py-2 px-4 border-b">{request.userId}</td>
-                <td className="py-2 px-4 border-b">{new Date(request.created_at).toLocaleDateString()}</td>
+                <td className="py-2 px-4 border-b">{request.created_at ? new Date(request.created_at).toLocaleDateString() : '-'}</td>
                 <td className="py-2 px-4 border-b">{request.userEmail}</td>
-                <td className="py-2 px-4 border-b">{request.paypal_email}</td>
-                 <td className="py-2 px-4 border-b">${request.amount_usd?.toFixed(2)}</td> {/* Corrected to amount_usd and formatted */}
-                <td className="py-2 px-4 border-b">{request.points}</td> {/* Keep Points */}
+                <td className="py-2 px-4 border-b">{request.paypal_email || '-'}</td>
+                <td className="py-2 px-4 border-b">{request.amount_usd?.toFixed(2)}</td>
+                <td className="py-2 px-4 border-b">{request.points}</td>
                 <td className="py-2 px-4 border-b">{request.status}</td>
-                <td className="py-2 px-4 border-b">{request.rejection_reason}</td>
-
+                <td className="py-2 px-4 border-b">{request.rejection_reason || '-'}</td>
                 <td className="py-2 px-4 border-b">
-                  {/* Add Approve/Reject buttons here */}
                   {request.status === 'Pending Review' && (
                     <>
                       <button
@@ -187,14 +185,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
         </table>
       )}
 
-      {/* Rejection Modal */}
       <Modal
-        isOpen={showRejectionModal} // Corrected prop name from 'show' to 'isOpen'
+        isOpen={showRejectionModal}
         onClose={handleCloseRejectionModal}
-        onConfirm={handleConfirmRejection} // Added onConfirm prop
+        onConfirm={handleConfirmRejection}
         title="Reject Withdrawal Request"
-        confirmText="Confirm Rejection" // Added confirmText prop
-        confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-500" // Added confirmButtonClass prop
+        confirmText="Confirm Rejection"
+        confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-500"
       >
         {requestToReject && (
           <div>
