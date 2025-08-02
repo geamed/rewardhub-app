@@ -138,11 +138,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
               <th className="py-2 px-4 border-b">User ID</th>
               <th className="py-2 px-4 border-b">Date</th> {/* Added Date Header */}
                <th className="py-2 px-4 border-b">User Email</th> {/* Added User Email */}
+              <th className="py-2 px-4 border-b">Date</th> {/* Added Date Header */}
+              <th className="py-2 px-4 border-b">PayPal Email</th> {/* Added PayPal Email Header */}
               <th className="py-2 px-4 border-b">Amount (USD)</th> {/* Corrected header */}
               <th className="py-2 px-4 border-b">Points</th>
               <th className="py-2 px-4 border-b">Status</th>
               <th className="py-2 px-4 border-b">Reason (if rejected)</th>
-              <th className="py-2 px-4 border-b">Actions</th>
+              <th className="py-2 px-4 border-b">Actions</th> {/* Keep Actions at the end */}
             </tr>
           </thead>
           <tbody>
@@ -153,8 +155,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
                 <td className="py-2 px-4 border-b">{request.userId}</td>
                 <td className="py-2 px-4 border-b">{new Date(request.created_at).toLocaleDateString()}</td> {/* Display formatted date */}
                  <td className="py-2 px-4 border-b">{request.userEmail}</td> {/* Display User Email */}
+                 <td className="py-2 px-4 border-b">{new Date(request.created_at).toLocaleDateString()}</td> {/* Display formatted date */}
+                 <td className="py-2 px-4 border-b">{request.paypal_email}</td> {/* Display PayPal Email */}
                  <td className="py-2 px-4 border-b">${request.amount_usd?.toFixed(2)}</td> {/* Corrected to amount_usd and formatted */}
-                <td className="py-2 px-4 border-b">{request.points}</td>
+                <td className="py-2 px-4 border-b">{request.points}</td> {/* Keep Points */}
                 <td className="py-2 px-4 border-b">{request.status}</td>
                 <td className="py-2 px-4 border-b">{request.rejection_reason}</td>
 
