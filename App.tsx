@@ -180,7 +180,6 @@ const App: React.FC = () => {
       if (window.TR) {
         window.TR = undefined; 
       }
-      // تم حذف setLastProcessedTRSessionPoints
       return;
     }
 
@@ -190,11 +189,10 @@ const App: React.FC = () => {
       return;
     }
     
-    // Do not initialize if profile is incomplete
+    // Allow initialization even without complete profile, but with warning
     if (!currentUserProfile.country_code || !currentUserProfile.postal_code) {
-        console.log("App.tsx (TR Effect): Profile incomplete, skipping TheoremReach initialization.");
-        setIsTheoremReachInitialized(false);
-        return;
+        console.log("App.tsx (TR Effect): Profile incomplete, but proceeding with TheoremReach initialization.");
+        // Don't return here - allow initialization to proceed
     }
     
     const theoremReachUserId = currentUser.id; 
@@ -205,11 +203,8 @@ const App: React.FC = () => {
     }
     
     console.log(`App.tsx (TR Effect): Preparing to initialize TheoremReach for user ID: ${theoremReachUserId}.`);
-    // تم حذف setLastProcessedTRSessionPoints
 
     const onRewardCallback = (data: TheoremReachRewardData) => {
-      // تم حذف currentTRSessionEarnings لأنه غير مستخدم مباشرة
-      // تم حذف setLastProcessedTRSessionPoints والمنطق المرتبط به
       const newlyEarnedPoints = data.earnedThisSession || 0;
       const userProfile = currentUserProfileRef.current;
       if (newlyEarnedPoints > 0 && userProfile) {
@@ -239,6 +234,11 @@ const App: React.FC = () => {
       window.TR = new window.TheoremReach(config);
       setIsTheoremReachInitialized(true);
       console.log("App.tsx (TR Effect): TheoremReach SDK Initialized successfully for user:", theoremReachUserId, "with attributes:", userAttributes);
+      
+      // Show notification if profile is incomplete
+      if (!currentUserProfile.country_code || !currentUserProfile.postal_code) {
+        addNotification("Complete your profile to access more surveys.", NotificationType.INFO);
+      }
     } catch (sdkError: any) {
       console.error("App.tsx (TR Effect): Failed to initialize TheoremReach SDK:", sdkError.message || sdkError);
       addNotification(`Could not initialize survey provider: ${sdkError.message || 'Unknown error'}`, NotificationType.ERROR);
@@ -248,10 +248,26 @@ const App: React.FC = () => {
 
 
   const handleAccessTheoremReach = useCallback(() => {
-    if (isTheoremReachInitialized && window.TR?.showRewardCenter) {
-      window.TR.showRewardCenter();
-    } else {
+    if (!isTheoremReachInitialized || !window.TR) {
       addNotification("Survey provider is not ready. Please complete your profile or wait.", NotificationType.INFO);
+      return;
+    }
+
+    try {
+      // Check if surveys are available before showing the reward center
+      if (window.TR.isSurveyAvailable && !window.TR.isSurveyAvailable()) {
+        addNotification("No surveys are currently available. Please try again later.", NotificationType.INFO);
+        return;
+      }
+
+      if (window.TR.showRewardCenter) {
+        window.TR.showRewardCenter();
+      } else {
+        addNotification("Survey provider is not properly initialized. Please refresh the page.", NotificationType.ERROR);
+      }
+    } catch (error: any) {
+      console.error("App.tsx: Error accessing TheoremReach:", error);
+      addNotification("Error accessing surveys. Please try again later.", NotificationType.ERROR);
     }
   }, [isTheoremReachInitialized, addNotification]);
 

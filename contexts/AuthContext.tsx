@@ -42,9 +42,8 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*') // Select all columns
-        .maybeSingle(); // Use maybeSingle to handle cases where no profile is found without throwing an error
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle cases where no profile is found without throwing an error
   
       if (error && error.code !== 'PGRST116') {
         // Log the error object directly
@@ -143,6 +142,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
           setCurrentUser(null);
           setCurrentUserProfile(null);
           setIsAdmin(false);
+        }
       } catch (error: any) {
         console.error(`AuthContext: [${_event}] CRITICAL ERROR in onAuthStateChange outer try/catch block:`, error.message, error);
         setCurrentUser(null);

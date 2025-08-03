@@ -105,60 +105,109 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin Withdrawal Requests</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Withdrawal Requests</h1>
+        <p className="text-gray-600">Manage and review user withdrawal requests</p>
+      </div>
 
       {/* Filter controls */}
-      <div className="mb-4">
-        <label htmlFor="statusFilter" className="mr-2">Filter by Status:</label>
+      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+        <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
         <select
           id="statusFilter"
           value={filter}
           onChange={(e) => setFilter(e.target.value as any)}
-          className="border rounded p-1"
+          className="border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
-          <option value="all">All</option>
-          <option value="Pending Review">Pending Review</option>
-          <option value="Processed">Processed</option>
-          <option value="Rejected">Rejected</option>
+          <option value="all">All Requests ({requests.length})</option>
+          <option value="Pending Review">Pending Review ({requests.filter(r => r.status === 'Pending Review').length})</option>
+          <option value="Processed">Processed ({requests.filter(r => r.status === 'Processed').length})</option>
+          <option value="Rejected">Rejected ({requests.filter(r => r.status === 'Rejected').length})</option>
         </select>
       </div>
 
       {/* Loading indicator */}
-      {isLoading && <p>Loading requests...</p>}
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading requests...</span>
+        </div>
+      )}
 
-      {/* Request List (Complete this part based on your UI) */}
+      {/* Request List */}
       {!isLoading && filteredRequests.length === 0 && (
-        <p>No withdrawal requests found for the selected filter.</p>
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <p className="text-gray-500 text-lg">No withdrawal requests found for the selected filter.</p>
+        </div>
       )}
 
       {!isLoading && filteredRequests.length > 0 && (
-        <table className="min-w-full bg-white">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              <th className="py-2 px-4 border-b">Request ID</th>
-              <th className="py-2 px-4 border-b">User ID</th>
-              <th className="py-2 px-4 border-b">Date</th>
-              <th className="py-2 px-4 border-b">User Email</th>
-              <th className="py-2 px-4 border-b">PayPal Email</th>
-              <th className="py-2 px-4 border-b">Amount (USD)</th>
-              <th className="py-2 px-4 border-b">Points</th>
-              <th className="py-2 px-4 border-b">Status</th>
-              <th className="py-2 px-4 border-b">Reason (if rejected)</th>
-              <th className="py-2 px-4 border-b">Actions</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Request ID</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">User ID</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Date & Time</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">User Email</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">PayPal Email</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Amount (USD)</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Points</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Status</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Rejection Reason</th>
+              <th className="py-2 px-4 border-b font-semibold text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredRequests.map(request => (
               <tr key={request.id}>
-                <td className="py-2 px-4 border-b">{request.id}</td>
-                <td className="py-2 px-4 border-b">{request.userId}</td>
-                <td className="py-2 px-4 border-b">{request.created_at ? new Date(request.created_at).toLocaleDateString() : '-'}</td>
-                <td className="py-2 px-4 border-b">{request.userEmail}</td>
-                <td className="py-2 px-4 border-b">{request.paypal_email || '-'}</td>
-                <td className="py-2 px-4 border-b">{request.amount_usd?.toFixed(2)}</td>
-                <td className="py-2 px-4 border-b">{request.points}</td>
-                <td className="py-2 px-4 border-b">{request.status}</td>
-                <td className="py-2 px-4 border-b">{request.rejection_reason || '-'}</td>
+                <td className="py-2 px-4 border-b text-xs font-mono">{request.id.substring(0, 8)}...</td>
+                <td className="py-2 px-4 border-b text-xs font-mono">{request.userId.substring(0, 8)}...</td>
+                <td className="py-2 px-4 border-b text-sm">
+                  {request.created_at ? (
+                    <div>
+                      <div className="font-medium">{new Date(request.created_at).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-500">{new Date(request.created_at).toLocaleTimeString()}</div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 italic">No date</span>
+                  )}
+                </td>
+                <td className="py-2 px-4 border-b text-sm">
+                  {request.userEmail ? (
+                    <span className="text-blue-600">{request.userEmail}</span>
+                  ) : (
+                    <span className="text-gray-400 italic">No email</span>
+                  )}
+                </td>
+                <td className="py-2 px-4 border-b text-sm">
+                  {request.paypal_email ? (
+                    <span className="text-green-600 font-medium">{request.paypal_email}</span>
+                  ) : (
+                    <span className="text-red-400 italic">No PayPal email</span>
+                  )}
+                </td>
+                <td className="py-2 px-4 border-b text-sm font-semibold">${request.amount_usd?.toFixed(2) || '0.00'}</td>
+                <td className="py-2 px-4 border-b text-sm font-medium">{request.points?.toLocaleString() || '0'}</td>
+                <td className="py-2 px-4 border-b">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    request.status === 'Pending Review' ? 'bg-yellow-100 text-yellow-800' :
+                    request.status === 'Processed' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {request.status}
+                  </span>
+                </td>
+                <td className="py-2 px-4 border-b text-sm">
+                  {request.rejection_reason ? (
+                    <span className="text-red-600 italic" title={request.rejection_reason}>
+                      {request.rejection_reason.length > 30 ? `${request.rejection_reason.substring(0, 27)}...` : request.rejection_reason}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
                 <td className="py-2 px-4 border-b">
                   {request.status === 'Pending Review' && (
                     <>
@@ -182,7 +231,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ getAllRequests, updateRequestStat
               </tr>
             ))}
           </tbody>
-        </table>
+            </table>
+          </div>
+        </div>
       )}
 
       <Modal
