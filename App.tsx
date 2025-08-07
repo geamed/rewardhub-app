@@ -15,7 +15,7 @@ import { THEOREMREACH_API_KEY } from './constants';
 import type { TheoremReachRewardData } from './theoremreach.d';
 import type { User as SupabaseUser, AuthError } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import XCircleIcon from './components/icons/XCircleIcon';
+
 
 const App: React.FC = () => {
   const {
