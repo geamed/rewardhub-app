@@ -16,8 +16,7 @@ const SurveyIcon: React.FC<{className?: string}> = ({className}) => (
 
 
 const TheoremReachCard: React.FC<TheoremReachCardProps> = ({ onEarnPoints, isLoading, profile }) => {
-  const isProfileComplete = !!profile.country_code && !!profile.postal_code;
-  const buttonDisabled = isLoading || !isProfileComplete;
+  const buttonDisabled = isLoading;
 
   return (
     <div className="bg-white shadow-lg rounded-xl p-6">
@@ -28,14 +27,6 @@ const TheoremReachCard: React.FC<TheoremReachCardProps> = ({ onEarnPoints, isLoa
       <p className="text-slate-600 mb-6">
         Complete surveys and offers through our partner <span className="font-semibold text-primary">TheoremReach</span> to earn points.
       </p>
-      
-      {!isProfileComplete && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded-r-lg">
-          <p className="text-sm text-yellow-700">
-            Please complete your <span className="font-bold">Profile Settings</span> to unlock and access surveys.
-          </p>
-        </div>
-      )}
 
       <button
         onClick={onEarnPoints}
@@ -43,7 +34,7 @@ const TheoremReachCard: React.FC<TheoremReachCardProps> = ({ onEarnPoints, isLoa
         className="w-full bg-secondary hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition-colors duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         aria-live="polite" // Announce changes if button text/state changes
       >
-        {isLoading && isProfileComplete ? (
+        {isLoading ? (
           <>
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

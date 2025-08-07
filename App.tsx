@@ -382,11 +382,10 @@ const App: React.FC = () => {
       <Dashboard
         profile={currentUserProfile!} 
         onEarnPoints={handleAccessTheoremReach} 
-        isEarningPointsLoading={!isTheoremReachInitialized && !!(currentUserProfile?.country_code && currentUserProfile?.postal_code)} 
+        isEarningPointsLoading={!isTheoremReachInitialized} 
         withdrawalRequests={userWithdrawalRequests} 
         onWithdraw={handleWithdraw}
         isWithdrawLoading={isWithdrawLoading}
-        onSaveProfile={updateUserDemographics}
         addNotification={addNotification}
       />
     );
@@ -506,33 +505,16 @@ const App: React.FC = () => {
     
     // State 6: Profile fetch completed (isAuthLoading is false OR it became true but profile is still null), but profile is null (error state)
     if (!currentUserProfile) { 
-       console.error("App.tsx: Rendering 'Error Loading User Data' page. currentUser exists and email confirmed, but currentUserProfile is null. This often indicates an RLS issue with the 'profiles' table or a failed profile creation/fetch. Check AuthContext logs.");
+       console.log("App.tsx: currentUserProfile is null, redirecting to login page");
+       // Redirect to login page instead of showing error
        return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-4 text-center">
-          <XCircleIcon className="h-16 w-16 text-red-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-semibold text-slate-800 mb-3">Error Loading User Data</h2>
-          <p className="text-slate-600 mb-8 max-w-md">
-            We encountered an issue loading your profile. This can happen if your email is verified but the profile setup failed.
-            Please try refreshing or logging out and back in.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2 w-full sm:w-auto"
-            >
-              Refresh Page
-            </button>
-            <button
-              onClick={handleLogout} 
-              className="px-6 py-3 border border-primary text-primary font-semibold rounded-lg hover:bg-primary-light hover:text-white transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2 w-full sm:w-auto"
-            >
-              Logout
-            </button>
-          </div>
-           <p className="mt-8 text-sm text-slate-500">
-              If the problem persists, please check the browser console for error details from `AuthContext` and contact support.
-          </p>
-           <NotificationStack /> {/* Added here for consistency */}
+        <div className="min-h-screen bg-slate-100">
+          <AuthPage 
+            initialMode={authPageInitialMode}
+            onModeChange={setAuthPageInitialMode}
+            onVerificationNeeded={setShowVerificationMessageFor}
+          />
+          <NotificationStack />
         </div>
       );
     }
