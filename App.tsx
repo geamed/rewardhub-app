@@ -26,7 +26,7 @@ const App: React.FC = () => {
     isAdmin,
     addWithdrawalRequestToContext,
     updatePointsInContext,
-    updateUserDemographics,
+
     getAllUsersWithdrawalRequests,
     updateUserWithdrawalRequestStatus, // Corrected destructuring name
     resendVerificationEmail // from useAuth
