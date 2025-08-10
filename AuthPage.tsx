@@ -11,6 +11,7 @@ interface AuthPageProps {
   onSuccessfulSignup: (email: string) => void; // New prop for signup success
   addNotification: (message: string, type: NotificationType) => void;
   initialMode?: 'login' | 'signup'; // New prop
+  onModeChange?: (mode: 'login' | 'signup') => void; // Added for App.tsx to control mode
 }
 
 const getSupabaseErrorMessage = (error: AuthError | null): string => {
@@ -212,6 +213,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess, onSuccessfulSignup, 
             onClick={() => {
               if (pageActionIsLoading) return;
               setIsLoginMode(!isLoginMode);
+              if (onModeChange) {
+                onModeChange(!isLoginMode ? 'login' : 'signup');
+              }
               setEmailError(null);
               setPasswordError(null);
               setConfirmPasswordError(null);
