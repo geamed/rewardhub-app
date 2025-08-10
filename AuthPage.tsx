@@ -9,6 +9,7 @@ import type { AuthError } from '@supabase/supabase-js';
 interface AuthPageProps {
   onAuthSuccess: () => void; 
   onSuccessfulSignup: (email: string) => void; // New prop for signup success
+  onVerificationNeeded: (email: string) => void; // Added for App.tsx to handle verification flow
   addNotification: (message: string, type: NotificationType) => void;
   initialMode?: 'login' | 'signup'; // New prop
   onModeChange?: (mode: 'login' | 'signup') => void; // Added for App.tsx to control mode
